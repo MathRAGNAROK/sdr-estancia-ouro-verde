@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR IA — Estância Ouro Verde</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal:    #1D9E75; --teal-l: #E1F5EE; --teal-d: #085041;
+    --purple:  #7F77DD; --purple-l: #EEEDFE; --purple-d: #3C3489;
+    --amber:   #EF9F27; --amber-l: #FAEEDA; --amber-d: #633806;
+    --coral:   #D85A30; --coral-l: #FAECE7; --coral-d: #4A1B0C;
+    --green:   #639922; --green-l: #EAF3DE; --green-d: #27500A;
+    --gray:    #888780; --gray-l: #F1EFE8; --gray-d: #2C2C2A;
+    --bg: #F7F6F2;
+    --card: #FFFFFF;
+    --text: #1a1a18;
+    --muted: #6b6b67;
+    --border: rgba(0,0,0,0.1);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    width: 100%; padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: white; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -0.02em;
+  }
+  .logo-dot {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 13px; font-weight: 700;
+  }
+  .header-tag {
+    font-size: 11px; font-weight: 500; color: var(--teal-d);
+    background: var(--teal-l); padding: 4px 12px; border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center; padding: 48px 24px 32px;
+    max-width: 620px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: clamp(26px, 4vw, 38px); line-height: 1.15;
+    letter-spacing: -0.03em; color: var(--text); margin-bottom: 14px;
+  }
+  .hero p {
+    font-size: 15px; color: var(--muted); line-height: 1.65; max-width: 480px; margin: 0 auto;
+  }
+
+  /* ── FLOW MAP ── */
+  .flow-map-wrap {
+    width: 100%; max-width: 800px; padding: 0 24px;
+    margin: 0 auto 24px;
+  }
+  .flow-map {
+    display: flex; align-items: center; gap: 0;
+    background: white; border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 14px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .flow-map::-webkit-scrollbar { display: none; }
+  .map-node {
+    flex-shrink: 0; padding: 5px 10px; border-radius: 8px;
+    font-size: 11px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+    border: 1.5px solid transparent;
+  }
+  .map-node:hover { opacity: 0.8; }
+  .map-node.active { transform: scale(1.06); }
+  .map-sep { color: #ccc; margin: 0 2px; font-size: 12px; flex-shrink: 0; }
+
+  /* ── MAIN CARD ── */
+  .main-wrap {
+    width: 100%; max-width: 800px;
+    padding: 0 24px 48px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 280px; gap: 16px;
+  }
+  @media(max-width: 680px) {
+    .main-wrap { grid-template-columns: 1fr; }
+    .side-panel { display: none; }
+  }
+
+  .chat-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+  .progress-strip { height: 3px; background: #f0efea; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+  .chat-header {
+    padding: 14px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-header-left { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .chat-name { font-weight: 500; font-size: 14px; }
+  .chat-sub { font-size: 12px; color: var(--muted); }
+  .stage-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .chat-body { padding: 20px; min-height: 320px; }
+
+  .bot-msg { display: flex; gap: 10px; margin-bottom: 16px; }
+  .bot-bubble {
+    background: #f4f3ef; border-radius: 4px 14px 14px 14px;
+    padding: 12px 15px; font-size: 14px; line-height: 1.6;
+    color: var(--text); max-width: 88%; border: 1px solid rgba(0,0,0,0.06);
+  }
+  .bot-bubble strong { font-weight: 500; }
+
+  .opts { display: flex; flex-direction: column; gap: 7px; margin-left: 46px; margin-top: 4px; }
+  .opt {
+    border: 1px solid var(--border); background: white;
+    border-radius: 10px; padding: 10px 14px;
+    cursor: pointer; font-size: 13px; text-align: left;
+    color: var(--text); transition: all 0.15s;
+    display: flex; align-items: center; gap: 9px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .opt:hover { transform: translateX(3px); }
+  .opt.sel { font-weight: 500; }
+  .opt-icon { font-size: 15px; flex-shrink: 0; }
+
+  .input-field {
+    margin-left: 46px; margin-top: 4px;
+    border: 1px solid var(--border); background: #fafaf8;
+    border-radius: 10px; padding: 11px 14px;
+    font-size: 13px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; animation: pulse 1.1s ease-in-out infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .user-msg {
+    display: flex; justify-content: flex-end;
+    margin-top: 14px;
+  }
+  .user-bubble {
+    border-radius: 14px 4px 14px 14px;
+    padding: 11px 15px; font-size: 14px;
+    color: white; max-width: 80%; line-height: 1.5;
+  }
+
+  .chat-footer {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .dots { display: flex; gap: 5px; align-items: center; }
+  .dot {
+    height: 6px; border-radius: 3px;
+    transition: all 0.3s ease;
+  }
+  .nav-btn {
+    padding: 8px 18px; border-radius: 9px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: white;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: #f4f3ef; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-btn.primary { border: none; color: white; }
+
+  /* ── SIDE PANEL ── */
+  .side-panel { display: flex; flex-direction: column; gap: 12px; }
+
+  .info-card {
+    background: white; border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .info-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px;
+  }
+
+  .lead-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .lead-key { font-size: 12px; color: var(--muted); }
+  .lead-val { font-size: 12px; font-weight: 500; color: var(--text); }
+  .lead-val.pending { color: #bbb; font-style: italic; }
+
+  .score-bar { height: 5px; background: #f0efea; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+  .funnel-stages { display: flex; flex-direction: column; gap: 5px; }
+  .funnel-stage {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 8px;
+    font-size: 12px; border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .funnel-stage.done { opacity: 0.5; }
+  .funnel-stage.current { font-weight: 500; }
+  .f-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .f-check { font-size: 12px; flex-shrink: 0; }
+
+  /* ── FOOTER ── */
+  .footer {
+    width: 100%; text-align: center; padding: 20px;
+    font-size: 12px; color: #bbb; border-top: 1px solid var(--border);
+    background: white;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-dot">E</div>
+    Estância Ouro Verde
+  </div>
+  <span class="header-tag">DEMONSTRATIVO SDR IA</span>
+</header>
+
+<div class="hero">
+  <p class="hero-eyebrow">Simulação de Atendimento Automatizado</p>
+  <h1>Como a SDR de IA vai qualificar seus leads</h1>
+  <p>Navegue pelas etapas da conversa e veja como o chatbot conduz o lead desde a primeira mensagem até o agendamento.</p>
+</div>
+
+<div class="flow-map-wrap">
+  <div class="flow-map" id="flow-map"></div>
+</div>
+
+<div class="main-wrap">
+
+  <div class="chat-card">
+    <div class="progress-strip">
+      <div class="progress-fill" id="progress"></div>
+    </div>
+    <div class="chat-header" id="chat-header"></div>
+    <div class="chat-body" id="chat-body"></div>
+    <div class="chat-footer" id="chat-footer"></div>
+  </div>
+
+  <div class="side-panel">
+    <div class="info-card">
+      <div class="info-title">Perfil do Lead</div>
+      <div id="lead-profile"></div>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <span style="font-size:12px;color:var(--muted)">Score de qualificação</span>
+          <span style="font-size:12px;font-weight:600" id="score-label">0%</span>
+        </div>
+        <div class="score-bar"><div class="score-fill" id="score-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-title">Etapas do Funil</div>
+      <div class="funnel-stages" id="funnel"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  Demonstrativo criado para Estância Ouro Verde · Implementação via BotConversa
+</footer>
+
+<script>
+const stages = [
+  {
+    id:1, label:"Boas-vindas", tag:"ABERTURA", color:"teal",
+    avatarBg:"#1D9E75", avatarText:"#fff", userBg:"#1D9E75",
+    tagBg:"#E1F5EE", tagText:"#085041",
+    message:"Olá! 👋 Bem-vindo ao <strong>Estância Ouro Verde</strong> — o primeiro bairro planejado de Vassouras!\n\nSou a Sofia, assistente virtual. Em poucos minutos consigo te apresentar as melhores opções e conectar você com nosso time.\n\nVamos começar? Qual é o seu <strong>nome</strong>?",
+    type:"input", placeholder:"Digite seu nome aqui...", answer:"Carlos Silva", options:[],
+    profile:{}, scoreGain:5
+  },
+  {
+    id:2, label:"Intenção", tag:"QUALIFICAÇÃO", color:"purple",
+    avatarBg:"#7F77DD", avatarText:"#fff", userBg:"#534AB7",
+    tagBg:"#EEEDFE", tagText:"#3C3489",
+    message:"Que bom te conhecer, <strong>Carlos</strong>! 😊\n\nMe conta uma coisa: o que te trouxe até o Estância Ouro Verde?",
+    type:"options", answer:"Quero investir e valorizar meu dinheiro",
+    options:[
+      {icon:"💰",text:"Quero investir e valorizar meu dinheiro"},
+      {icon:"🏡",text:"Quero morar e ter qualidade de vida"},
+      {icon:"🌿",text:"Busco uma segunda residência / refúgio"},
+      {icon:"🔍",text:"Estou só pesquisando por enquanto"},
+    ],
+    profile:{Objetivo:"Investimento"}, scoreGain:15
+  },
+  {
+    id:3, label:"Localização", tag:"QUALIFICAÇÃO", color:"purple",
+    avatarBg:"#7F77DD", avatarText:"#fff", userBg:"#534AB7",
+    tagBg:"#EEEDFE", tagText:"#3C3489",
+    message:"Ótimo foco! Investimento em lote de alto padrão com valorização comprovada é exatamente o que o Estância oferece. 📈\n\nVocê mora em qual cidade atualmente?",
+    type:"options", answer:"Rio de Janeiro",
+    options:[
+      {icon:"🌇",text:"Rio de Janeiro"},
+      {icon:"🏙️",text:"São Paulo"},
+      {icon:"📍",text:"Vassouras ou região"},
+      {icon:"📌",text:"Outra cidade"},
+    ],
+    profile:{Cidade:"Rio de Janeiro"}, scoreGain:10
+  },
+  {
+    id:4, label:"Conhecimento", tag:"QUALIFICAÇÃO", color:"purple",
+    avatarBg:"#7F77DD", avatarText:"#fff", userBg:"#534AB7",
+    tagBg:"#EEEDFE", tagText:"#3C3489",
+    message:"Perfeito! Vassouras fica a apenas <strong>2h do Rio</strong>, com tranquilidade e segurança que a cidade grande não oferece. 🚗\n\nVocê já conhece o Estância Ouro Verde pessoalmente?",
+    type:"options", answer:"Vi nas redes sociais / internet",
+    options:[
+      {icon:"✅",text:"Sim, já visitei o empreendimento"},
+      {icon:"📱",text:"Vi nas redes sociais / internet"},
+      {icon:"👥",text:"Um amigo ou familiar me indicou"},
+      {icon:"🆕",text:"Estou descobrindo agora"},
+    ],
+    profile:{Origem:"Redes sociais"}, scoreGain:10
+  },
+  {
+    id:5, label:"Faixa de valor", tag:"FINANCEIRO", color:"amber",
+    avatarBg:"#EF9F27", avatarText:"#633806", userBg:"#BA7517",
+    tagBg:"#FAEEDA", tagText:"#633806",
+    message:"Maravilha! Temos lotes a partir de <strong>R$ 189.900</strong> com infraestrutura completa e financiamento direto.\n\nQual faixa de investimento se encaixa melhor no seu momento atual?",
+    type:"options", answer:"Entre R$ 250k e R$ 400k",
+    options:[
+      {icon:"🟢",text:"Até R$ 250 mil"},
+      {icon:"🟡",text:"Entre R$ 250k e R$ 400k"},
+      {icon:"🔵",text:"Acima de R$ 400k"},
+      {icon:"🤔",text:"Ainda estou avaliando"},
+    ],
+    profile:{Budget:"R$ 250k–400k"}, scoreGain:20
+  },
+  {
+    id:6, label:"Urgência", tag:"TIMING", color:"coral",
+    avatarBg:"#D85A30", avatarText:"#fff", userBg:"#993C1D",
+    tagBg:"#FAECE7", tagText:"#4A1B0C",
+    message:"Excelente! Temos ótimas condições disponíveis agora. ⏳\n\nEm qual prazo você imagina concretizar essa compra?",
+    type:"options", answer:"Em até 3 meses",
+    options:[
+      {icon:"🔥",text:"Nos próximos 30 dias"},
+      {icon:"📅",text:"Em até 3 meses"},
+      {icon:"🕐",text:"Em 6 meses ou mais"},
+      {icon:"🔍",text:"Ainda estou pesquisando"},
+    ],
+    profile:{Prazo:"Até 3 meses"}, scoreGain:15
+  },
+  {
+    id:7, label:"Contato", tag:"CAPTURA", color:"green",
+    avatarBg:"#639922", avatarText:"#fff", userBg:"#3B6D11",
+    tagBg:"#EAF3DE", tagText:"#27500A",
+    message:"Perfeito, <strong>Carlos</strong>! 🎉 Vou conectar você com um de nossos especialistas para apresentar as melhores opções dentro da sua faixa.\n\nQual é o seu <strong>número de WhatsApp</strong> com DDD?",
+    type:"input", placeholder:"(21) 99999-9999", answer:"(21) 98765-4321", options:[],
+    profile:{WhatsApp:"(21) 98765-4321"}, scoreGain:15
+  },
+  {
+    id:8, label:"Agendamento", tag:"CONVERSÃO", color:"green",
+    avatarBg:"#639922", avatarText:"#fff", userBg:"#3B6D11",
+    tagBg:"#EAF3DE", tagText:"#27500A",
+    message:"Anotado! Nosso especialista já recebeu suas informações. 🙌\n\nComo você prefere dar o próximo passo?",
+    type:"options", answer:"Agendar uma visita ao empreendimento",
+    options:[
+      {icon:"📞",text:"Receber uma ligação ainda hoje"},
+      {icon:"💬",text:"Continuar a conversa pelo WhatsApp"},
+      {icon:"🏡",text:"Agendar uma visita ao empreendimento"},
+    ],
+    profile:{Próximo:"Visita agendada"}, scoreGain:10
+  },
+];
+
+const funnelLabels = ["Boas-vindas","Qualificação","Financeiro","Timing","Captura","Conversão"];
+const funnelColors = ["var(--teal)","var(--purple)","var(--amber)","var(--coral)","var(--green)","var(--green)"];
+const colorMap = {teal:"var(--teal)",purple:"var(--purple)",amber:"var(--amber)",coral:"var(--coral)",green:"var(--green)"};
+const bgMap   = {teal:"var(--teal-l)",purple:"var(--purple-l)",amber:"var(--amber-l)",coral:"var(--coral-l)",green:"var(--green-l)"};
+
+let cur = 0;
+let revealed = false;
+let cumProfile = {};
+let cumScore = 0;
+
+function getFunnelIdx(s) {
+  const map = {1:0,2:1,3:1,4:1,5:2,6:3,7:4,8:5};
+  return map[s.id] ?? 0;
+}
+
+function renderMap() {
+  const el = document.getElementById('flow-map');
+  let h = '';
+  stages.forEach((s,i) => {
+    const isAct = i === cur;
+    const past = i < cur;
+    const c = isAct||past ? colorMap[s.color] : '#ccc';
+    const bg = isAct||past ? bgMap[s.color] : 'transparent';
+    h += `<div class="map-node${isAct?' active':''}" onclick="goTo(${i})"
+      style="background:${bg};color:${isAct||past?s.tagText:'#999'};border-color:${isAct?c:'transparent'};font-weight:${isAct?'600':'400'}">${s.id}. ${s.label}</div>`;
+    if(i<stages.length-1) h += `<span class="map-sep">›</span>`;
+  });
+  el.innerHTML = h;
+}
+
+function renderChat() {
+  const s = stages[cur];
+  const pct = Math.round((cur/(stages.length-1))*100);
+
+  // Progress
+  document.getElementById('progress').style.cssText = `width:${pct}%;background:${colorMap[s.color]}`;
+
+  // Header
+  document.getElementById('chat-header').innerHTML = `
+    <div class="chat-header-left">
+      <div class="avatar" style="background:${s.avatarBg};color:${s.avatarText}">S</div>
+      <div><div class="chat-name">Sofia</div><div class="chat-sub">Assistente Virtual · Estância Ouro Verde</div></div>
+    </div>
+    <span class="stage-badge" style="background:${s.tagBg};color:${s.tagText}">${s.tag}</span>
+  `;
+
+  // Body
+  const msgHtml = s.message.replace(/\n/g,'<br>');
+  let optsHtml = '';
+  if(s.type==='options') {
+    s.options.forEach(o => {
+      const sel = revealed && o.text===s.answer;
+      optsHtml += `<button class="opt${sel?' sel':''}" style="${sel?`background:${s.tagBg};border-color:${colorMap[s.color]};color:${s.tagText}`:''}" onclick="reveal()">
+        <span class="opt-icon">${o.icon}</span>${o.text}
+      </button>`;
+    });
+    optsHtml = `<div class="opts">${optsHtml}</div>`;
+  } else {
+    optsHtml = `<div class="input-field"><div class="pulse" style="background:${colorMap[s.color]}"></div>${s.placeholder}</div>`;
+  }
+
+  const ansHtml = revealed ? `<div class="user-msg"><div class="user-bubble" style="background:${s.userBg}">
+    ${s.type==='options' ? (s.options.find(o=>o.text===s.answer)?.icon+' '+s.answer) : s.answer}
+  </div></div>` : '';
+
+  document.getElementById('chat-body').innerHTML = `
+    <div class="bot-msg">
+      <div class="avatar" style="background:${s.avatarBg};color:${s.avatarText};flex-shrink:0">S</div>
+      <div class="bot-bubble">${msgHtml}</div>
+    </div>
+    ${optsHtml}
+    ${ansHtml}
+  `;
+
+  // Footer dots
+  const dotsHtml = stages.map((_,i)=>`<div class="dot" style="width:${i===cur?'18px':'6px'};background:${i===cur?colorMap[s.color]:i<cur?colorMap[stages[i].color]+'55':'#e0dfd9'}"></div>`).join('');
+  document.getElementById('chat-footer').innerHTML = `
+    <button class="nav-btn" onclick="prev()" ${cur===0?'disabled':''}>← Anterior</button>
+    <div class="dots">${dotsHtml}</div>
+    <button class="nav-btn primary" onclick="next()" style="background:${colorMap[s.color]}" ${cur===stages.length-1?'disabled':''}>Próxima →</button>
+  `;
+}
+
+function renderSide() {
+  // Profile
+  const fields = [
+    {k:"Nome",v:cur>0?"Carlos Silva":null},
+    {k:"Objetivo",v:cumProfile.Objetivo||null},
+    {k:"Cidade",v:cumProfile.Cidade||null},
+    {k:"Origem",v:cumProfile.Origem||null},
+    {k:"Budget",v:cumProfile.Budget||null},
+    {k:"Prazo",v:cumProfile.Prazo||null},
+    {k:"WhatsApp",v:cumProfile.WhatsApp||null},
+    {k:"Próximo",v:cumProfile.Próximo||null},
+  ];
+  const profileHtml = fields.map(f=>`<div class="lead-row">
+    <span class="lead-key">${f.k}</span>
+    <span class="lead-val${f.v?'':' pending'}">${f.v||'—'}</span>
+  </div>`).join('');
+  document.getElementById('lead-profile').innerHTML = profileHtml;
+
+  const sc = Math.min(cumScore,100);
+  const scoreColor = sc<30?'var(--coral)':sc<60?'var(--amber)':'var(--green)';
+  document.getElementById('score-label').textContent = sc+'%';
+  document.getElementById('score-fill').style.cssText = `width:${sc}%;background:${scoreColor}`;
+
+  // Funnel
+  const fIdx = getFunnelIdx(stages[cur]);
+  const funnelHtml = funnelLabels.map((l,i)=>{
+    const done = i<fIdx;
+    const curr = i===fIdx;
+    return `<div class="funnel-stage ${done?'done':curr?'current':''}" style="${curr?`background:${funnelColors[i]}18;border-color:${funnelColors[i]}33`:''}">
+      <div class="f-dot" style="background:${done||curr?funnelColors[i]:'#ddd'}"></div>
+      <span style="flex:1">${l}</span>
+      ${done?'<span class="f-check">✓</span>':curr?'<span style="font-size:10px;color:'+funnelColors[i]+'">●</span>':''}
+    </div>`;
+  }).join('');
+  document.getElementById('funnel').innerHTML = funnelHtml;
+}
+
+function reveal() {
+  if(revealed) return;
+  revealed = true;
+  const s = stages[cur];
+  Object.assign(cumProfile, s.profile);
+  cumScore += s.scoreGain;
+  renderChat();
+  renderSide();
+}
+
+function goTo(i) {
+  cur = i; revealed = false;
+  // rebuild profile up to this stage
+  cumProfile = {}; cumScore = 0;
+  for(let j=0;j<i;j++) { Object.assign(cumProfile, stages[j].profile); cumScore+=stages[j].scoreGain; }
+  renderMap(); renderChat(); renderSide();
+}
+
+function next() {
+  if(!revealed && stages[cur].type==='options') { reveal(); return; }
+  if(cur<stages.length-1) { cur++; revealed=false; renderMap(); renderChat(); renderSide(); }
+}
+function prev() {
+  if(cur>0) { cur--; revealed=false; renderMap(); renderChat(); renderSide(); }
+}
+
+goTo(0);
+</script>
+</body>
+</html>
